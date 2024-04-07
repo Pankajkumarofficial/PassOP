@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,8 +7,8 @@ import axios from 'axios';
 const Manager = () => {
     const ref = useRef();
     const passwordRef = useRef();
-    const [form, setForm] = useState({ site: "", username: "", password: "" })
-    const [passwordArray, setPasswordArray] = useState([])
+    const [form, setForm] = useState({ site: "", username: "", password: "" });
+    const [passwordArray, setPasswordArray] = useState([]);
 
     const getPassword = async () => {
         try {
@@ -22,90 +22,91 @@ const Manager = () => {
     };
 
     useEffect(() => {
-        getPassword()
-    }, [])
+        getPassword();
+    }, []);
 
     const showPassword = () => {
-        // passwordRef.current.type = 'text'
         if (ref.current.src.includes("icons/eyecross.webp")) {
-            ref.current.src = "icons/eye.webp"
-            passwordRef.current.type = 'password'
+            ref.current.src = "icons/eye.webp";
+            passwordRef.current.type = 'password';
+        } else {
+            ref.current.src = "icons/eyecross.webp";
+            passwordRef.current.type = 'text';
         }
-        else {
-            ref.current.src = "icons/eyecross.webp"
-            passwordRef.current.type = 'text'
-        }
-    }
+    };
 
     const savePassword = async () => {
         if (form.site.length > 3 && form.username.length > 3 && form.password.length > 3) {
-            // for dlt previos
-            await fetch("http://localhost:3000/", {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ id: form.id })
-            })
-            setPasswordArray([...passwordArray, { ...form, id: uuidv4() }])
-            await fetch("http://localhost:3000/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ ...form, id: uuidv4() })
-            })
-            // localStorage.setItem("passwords", JSON.stringify([...passwordArray, { ...form, id: uuidv4() }]))
-            // console.log([...passwordArray, form])
-            setForm({ site: "", username: "", password: "" })
-            toast('Password Saved', {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-            });
+            const newId = uuidv4(); // Generate a new ID once
+            form.id = newId;
+
+            try {
+                // Delete the previous entry if it exists
+                await axios.delete("http://localhost:3000/", {
+                    data: { id: form.id }
+                });
+
+                // Update passwordArray with the new entry
+                setPasswordArray(prevPasswordArray => [...prevPasswordArray, { ...form, id: newId }]);
+
+                // Add the new entry
+                await axios.post("http://localhost:3000/", { ...form, id: newId });
+
+                setForm({ site: "", username: "", password: "" });
+
+                toast('Password Saved', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "dark",
+                });
+            } catch (error) {
+                console.error(error);
+                toast("Password not saved");
+            }
+        } else {
+            toast("Password not saved");
         }
-        else {
-            toast("Password not saved")
-        }
-    }
+    };
 
     const deletePassword = async (id) => {
-        console.log("Delete successfully " + id)
-        setPasswordArray(passwordArray.filter(item => item.id !== id))
-        // localStorage.setItem("passwords", JSON.stringify(passwordArray.filter(item => item.id !== id)))
-        let res = await fetch("http://localhost:3000/", {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ id })
-        })
-        toast('Password Deleted', {
-            position: "top-right",
-            autoClose: 5000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-        });
-    }
+        console.log("Delete successfully " + id);
+        let c = confirm("Are you sure you want to delete");
+        if (c) {
+            setPasswordArray(passwordArray.filter(item => item.id !== id));
+            try {
+                await axios.delete("http://localhost:3000/", {
+                    data: { id }
+                });
+                toast('Password Deleted', {
+                    position: "top-right",
+                    autoClose: 5000,
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "dark",
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    };
 
     const editPassword = (id) => {
-        console.log("Edit successfully " + id)
-        setForm({ ...passwordArray.filter(i => i.id === id)[0], id: id })
-        setPasswordArray(passwordArray.filter(item => item.id !== id))
-    }
+        console.log("Edit successfully " + id);
+        setForm({ ...passwordArray.filter(i => i.id === id)[0], id: id });
+        setPasswordArray(passwordArray.filter(item => item.id !== id));
+    };
 
     const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value })
-    }
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
 
     const copyText = (text) => {
         toast('Copy to clipboard', {
@@ -118,8 +119,8 @@ const Manager = () => {
             progress: undefined,
             theme: "light",
         });
-        navigator.clipboard.writeText(text)
-    }
+        navigator.clipboard.writeText(text);
+    };
 
     return (
         <>
